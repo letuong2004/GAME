@@ -43,7 +43,7 @@ public class DatabaseConnection {
     }
 
     public boolean registerAccount(String username, String password, String nickname, String avatar) {
-        String sql = "INSERT INTO users (username, password, nickname, avatar) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO users (username, password, nickname, avatar) VALUES (?, MD5(?), ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, username);
             pstmt.setString(2, password);
@@ -59,7 +59,7 @@ public class DatabaseConnection {
     }
 
     public Account loginAccount(String username, String password) {
-        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+        String sql = "SELECT * FROM users WHERE username = ? AND password = MD5(?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, username);
             pstmt.setString(2, password);

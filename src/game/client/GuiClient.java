@@ -37,7 +37,10 @@ public class GuiClient extends JFrame {
     private JLabel lblRate;
     private JLabel lblPoints;
     private JLabel lblRank;
+    private JLabel lblAvatar;
+    private JLabel lblOpponentAvatar;
     private JLabel lblOpponent;
+    private JLabel lblOpponentRank;
     private JLabel lblTimer;
     private JLabel lblRoomInfo;
     private JTextArea chatArea;
@@ -65,13 +68,19 @@ public class GuiClient extends JFrame {
     private BufferedReader in;
     private boolean connected;
     private boolean loggedIn;
+    private boolean parsingProfileInfo;
 
     public GuiClient() {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {
+        }
         setTitle("Game Caro");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(500, 350);
+        setSize(1000, 700);
+        setMinimumSize(new Dimension(900, 650));
         setLocationRelativeTo(null);
-        setResizable(false);
+        setResizable(true);
         initComponents();
         connectToServerAuto();
     }
@@ -86,23 +95,24 @@ public class GuiClient extends JFrame {
     }
 
     private JPanel createLoginCard() {
-        JPanel loginCard = new JPanel(new BorderLayout(10, 10));
-        loginCard.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        loginCard.setBackground(new Color(240, 240, 240));
+        JPanel loginCard = new JPanel(new BorderLayout(18, 18));
+        loginCard.setBorder(BorderFactory.createEmptyBorder(30, 30, 30, 30));
+        loginCard.setBackground(new Color(238, 246, 255));
 
         JLabel title = new JLabel("Game Caro", SwingConstants.CENTER);
-        title.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        title.setForeground(new Color(0, 102, 204));
+        title.setFont(new Font("Segoe UI", Font.BOLD, 34));
+        title.setForeground(new Color(14, 76, 129));
         loginCard.add(title, BorderLayout.NORTH);
 
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Đăng nhập", createLoginPanel());
         
-        // Wrap register panel in scroll pane
         JPanel registerPanel = createRegisterPanel();
         JScrollPane registerScroll = new JScrollPane(registerPanel);
         registerScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         tabbedPane.addTab("Đăng ký", registerScroll);
+        tabbedPane.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tabbedPane.setBackground(new Color(245, 250, 255));
 
         loginCard.add(tabbedPane, BorderLayout.CENTER);
 
@@ -111,21 +121,23 @@ public class GuiClient extends JFrame {
 
     private JPanel createLoginPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(new Color(250, 252, 255));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(205, 215, 230), 1),
+                BorderFactory.createEmptyBorder(24, 24, 24, 24)));
         
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(12, 12, 12, 12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
         loginUsernameField = new JTextField();
         loginPasswordField = new JPasswordField();
         loginButton = new JButton("Đăng nhập");
-        loginButton.setBackground(new Color(0, 102, 204));
+        loginButton.setBackground(new Color(14, 76, 129));
         loginButton.setForeground(Color.WHITE);
-        loginButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        loginButton.setPreferredSize(new Dimension(100, 35));
+        loginButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        loginButton.setPreferredSize(new Dimension(120, 40));
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -138,7 +150,7 @@ public class GuiClient extends JFrame {
         panel.add(loginPasswordField, gbc);
         
         gbc.gridy = 4;
-        gbc.insets = new Insets(20, 10, 10, 10);
+        gbc.insets = new Insets(24, 12, 12, 12);
         panel.add(loginButton, gbc);
 
         loginButton.addActionListener(e -> login());
@@ -149,11 +161,13 @@ public class GuiClient extends JFrame {
 
     private JPanel createRegisterPanel() {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBackground(Color.WHITE);
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(new Color(250, 252, 255));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(205, 215, 230), 1),
+                BorderFactory.createEmptyBorder(20, 20, 20, 20)));
         
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 10, 8, 10);
+        gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
@@ -162,13 +176,13 @@ public class GuiClient extends JFrame {
         registerNicknameField = new JTextField();
         registerAvatarField = new JTextField("default");
         registerButton = new JButton("Đăng ký");
-        registerButton.setBackground(new Color(0, 153, 76));
+        registerButton.setBackground(new Color(14, 76, 129));
         registerButton.setForeground(Color.WHITE);
-        registerButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        registerButton.setPreferredSize(new Dimension(100, 35));
+        registerButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        registerButton.setPreferredSize(new Dimension(120, 40));
         
         JButton btnBrowseAvatar = new JButton("Chọn");
-        btnBrowseAvatar.setPreferredSize(new Dimension(80, 25));
+        btnBrowseAvatar.setPreferredSize(new Dimension(90, 30));
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -186,15 +200,15 @@ public class GuiClient extends JFrame {
         gbc.gridy = 6;
         panel.add(new JLabel("Avatar:"), gbc);
         
-        JPanel avatarPanel = new JPanel(new BorderLayout(5, 5));
-        avatarPanel.setBackground(Color.WHITE);
+        JPanel avatarPanel = new JPanel(new BorderLayout(6, 6));
+        avatarPanel.setBackground(new Color(250, 252, 255));
         avatarPanel.add(registerAvatarField, BorderLayout.CENTER);
         avatarPanel.add(btnBrowseAvatar, BorderLayout.EAST);
         gbc.gridy = 7;
         panel.add(avatarPanel, gbc);
         
         gbc.gridy = 8;
-        gbc.insets = new Insets(15, 10, 8, 10);
+        gbc.insets = new Insets(18, 10, 10, 10);
         panel.add(registerButton, gbc);
 
         registerButton.addActionListener(e -> register());
@@ -204,71 +218,53 @@ public class GuiClient extends JFrame {
     }
 
     private JPanel createLobbyCard() {
-        JPanel lobby = new JPanel(new BorderLayout(12, 12));
-        lobby.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        JPanel lobby = new JPanel(new BorderLayout(16, 16));
+        lobby.setBackground(new Color(240, 244, 252));
+        lobby.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
-        JPanel leftPanel = new JPanel(new BorderLayout(12, 12));
+        JLabel pageTitle = new JLabel("Game Caro", SwingConstants.CENTER);
+        pageTitle.setFont(new Font("Segoe UI", Font.BOLD, 30));
+        pageTitle.setForeground(new Color(14, 76, 129));
+        JPanel titlePanel = new JPanel(new BorderLayout());
+        titlePanel.setBackground(new Color(240, 244, 252));
+        titlePanel.add(pageTitle, BorderLayout.CENTER);
+        lobby.add(titlePanel, BorderLayout.NORTH);
+
+        JPanel leftPanel = new JPanel(new BorderLayout(14, 14));
+        leftPanel.setBackground(new Color(240, 244, 252));
         leftPanel.setPreferredSize(new Dimension(340, 0));
 
-        JPanel profilePanel = new JPanel(new GridLayout(6, 1, 6, 6));
-        profilePanel.setBorder(BorderFactory.createTitledBorder("Thông tin cá nhân"));
-        lblNickname = createInfoLabel("Nickname: -");
-        lblWins = createInfoLabel("Số trận thắng: 0");
-        lblLosses = createInfoLabel("Số trận thua: 0");
-        lblRate = createInfoLabel("Tỉ lệ thắng: 0%");
-        lblPoints = createInfoLabel("Điểm: 0");
-        lblRank = createInfoLabel("Thứ hạng: -");
-        profilePanel.add(lblNickname);
-        profilePanel.add(lblWins);
-        profilePanel.add(lblLosses);
-        profilePanel.add(lblRate);
-        profilePanel.add(lblPoints);
-        profilePanel.add(lblRank);
+        JPanel infoCards = new JPanel(new GridLayout(2, 1, 12, 12));
+        infoCards.setBackground(new Color(240, 244, 252));
+        infoCards.add(createPlayerCard());
+        infoCards.add(createOpponentCard());
 
-        JPanel opponentPanel = new JPanel(new GridLayout(3, 1, 6, 6));
-        opponentPanel.setBorder(BorderFactory.createTitledBorder("Đối thủ"));
-        lblOpponent = createInfoLabel("Chưa có đối thủ");
-        lblTimer = createInfoLabel("Thời gian: 00:00");
-        opponentPanel.add(lblOpponent);
-        opponentPanel.add(lblTimer);
-        opponentPanel.add(new JLabel());
+        leftPanel.add(infoCards, BorderLayout.NORTH);
 
-        JPanel infoGroup = new JPanel(new GridLayout(2, 1, 10, 10));
-        infoGroup.add(profilePanel);
-        infoGroup.add(opponentPanel);
+        JPanel roomGroup = new JPanel(new BorderLayout(10, 10));
+        roomGroup.setBackground(new Color(240, 244, 252));
+        roomGroup.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(200, 210, 225)), "Phòng"));
 
         roomListModel = new DefaultListModel<>();
         roomList = new JList<>(roomListModel);
-        roomList.setBorder(BorderFactory.createTitledBorder("Danh sách phòng"));
-        roomList.setVisibleRowCount(8);
+        roomList.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        roomList.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         JScrollPane roomScroll = new JScrollPane(roomList);
-
-        leaderboardModel = new DefaultListModel<>();
-        leaderboardModel.addElement("Xếp hạng server");
-        leaderboardModel.addElement("1. Tester - 1000");
-        leaderboardModel.addElement("2. Alice - 980");
-        leaderboardModel.addElement("3. Bob - 950");
-        leaderboardList = new JList<>(leaderboardModel);
-        leaderboardList.setBorder(BorderFactory.createTitledBorder("Xếp hạng"));
-        leaderboardList.setVisibleRowCount(5);
-        JScrollPane leaderboardScroll = new JScrollPane(leaderboardList);
-
-        JPanel listGroup = new JPanel(new GridLayout(2, 1, 10, 10));
-        listGroup.add(roomScroll);
-        listGroup.add(leaderboardScroll);
+        roomGroup.add(roomScroll, BorderLayout.CENTER);
 
         JPanel roomControlPanel = new JPanel(new GridBagLayout());
-        roomControlPanel.setBorder(BorderFactory.createTitledBorder("Phòng"));
+        roomControlPanel.setBackground(new Color(255, 255, 255));
+        roomControlPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(6, 6, 6, 6);
+        gbc.insets = new Insets(8, 8, 8, 8);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         roomIdField = new JTextField();
         roomPasswordField = new JPasswordField();
-        btnCreateRoom = new JButton("Tạo phòng");
-        btnJoinRoom = new JButton("Vào phòng");
-        btnListRooms = new JButton("Danh sách phòng");
-        btnQuickPlay = new JButton("Chơi nhanh");
-        btnBot = new JButton("Chơi BOT");
+        btnCreateRoom = createStyledButton("Tạo phòng", new Color(14, 76, 129));
+        btnJoinRoom = createStyledButton("Vào phòng", new Color(0, 123, 104));
+        btnListRooms = createStyledButton("Danh sách", new Color(64, 89, 137));
+        btnQuickPlay = createStyledButton("Chơi nhanh", new Color(40, 167, 69));
+        btnBot = createStyledButton("Chơi BOT", new Color(255, 193, 7));
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -293,41 +289,55 @@ public class GuiClient extends JFrame {
         gbc.gridy = 6;
         roomControlPanel.add(btnBot, gbc);
 
-        leftPanel.add(infoGroup, BorderLayout.NORTH);
-        leftPanel.add(listGroup, BorderLayout.CENTER);
-        leftPanel.add(roomControlPanel, BorderLayout.SOUTH);
+        roomGroup.add(roomControlPanel, BorderLayout.SOUTH);
+        leftPanel.add(roomGroup, BorderLayout.CENTER);
+
+        lobby.add(leftPanel, BorderLayout.WEST);
 
         JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
-        centerPanel.setBorder(BorderFactory.createTitledBorder("Bàn cờ"));
+        centerPanel.setBackground(new Color(255, 255, 255));
+        centerPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 210, 225)),
+                BorderFactory.createEmptyBorder(12, 12, 12, 12)));
         boardPanel = new BoardPanel();
         boardPanel.setBackground(new Color(247, 220, 111));
+        boardPanel.setPreferredSize(new Dimension(520, 520));
         centerPanel.add(boardPanel, BorderLayout.CENTER);
+
         lblRoomInfo = new JLabel("Phòng: Chưa vào phòng", SwingConstants.CENTER);
         lblRoomInfo.setFont(lblRoomInfo.getFont().deriveFont(Font.BOLD, 14f));
         centerPanel.add(lblRoomInfo, BorderLayout.SOUTH);
 
-        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
-        rightPanel.setPreferredSize(new Dimension(340, 0));
-        JPanel chatPanel = new JPanel(new BorderLayout(6, 6));
-        chatPanel.setBorder(BorderFactory.createTitledBorder("Chat lobby"));
+        lobby.add(centerPanel, BorderLayout.CENTER);
+
+        JPanel rightPanel = new JPanel(new BorderLayout(12, 12));
+        rightPanel.setBackground(new Color(240, 244, 252));
+        rightPanel.setPreferredSize(new Dimension(320, 0));
+
+        JPanel chatPanel = new JPanel(new BorderLayout(10, 10));
+        chatPanel.setBackground(new Color(255, 255, 255));
+        chatPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(200, 210, 225)), "Chat lobby"));
         chatArea = new JTextArea();
         chatArea.setEditable(false);
         chatArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
+        chatArea.setBackground(new Color(250, 250, 250));
         chatPanel.add(new JScrollPane(chatArea), BorderLayout.CENTER);
 
-        JPanel chatInputPanel = new JPanel(new BorderLayout(6, 6));
+        JPanel chatInputPanel = new JPanel(new BorderLayout(10, 10));
+        chatInputPanel.setBackground(new Color(255, 255, 255));
         chatField = new JTextField();
-        btnSendChat = new JButton("Gửi");
+        btnSendChat = createStyledButton("Gửi", new Color(14, 76, 129));
         chatInputPanel.add(chatField, BorderLayout.CENTER);
         chatInputPanel.add(btnSendChat, BorderLayout.EAST);
         chatPanel.add(chatInputPanel, BorderLayout.SOUTH);
 
         JPanel playControlPanel = new JPanel(new GridLayout(2, 2, 10, 10));
-        playControlPanel.setBorder(BorderFactory.createTitledBorder("Chức năng trận đấu"));
-        btnForfeit = new JButton("Xin thua");
-        btnDraw = new JButton("Xin hòa");
-        btnLeave = new JButton("Rời phòng");
-        btnStatus = new JButton("Trạng thái");
+        playControlPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(new Color(200, 210, 225)), "Chức năng trận đấu"));
+        playControlPanel.setBackground(new Color(255, 255, 255));
+        btnForfeit = createStyledButton("Xin thua", new Color(220, 53, 69));
+        btnDraw = createStyledButton("Xin hòa", new Color(23, 162, 184));
+        btnLeave = createStyledButton("Rời phòng", new Color(108, 117, 125));
+        btnStatus = createStyledButton("Trạng thái", new Color(23, 162, 184));
         playControlPanel.add(btnForfeit);
         playControlPanel.add(btnDraw);
         playControlPanel.add(btnLeave);
@@ -336,8 +346,6 @@ public class GuiClient extends JFrame {
         rightPanel.add(chatPanel, BorderLayout.CENTER);
         rightPanel.add(playControlPanel, BorderLayout.SOUTH);
 
-        lobby.add(leftPanel, BorderLayout.WEST);
-        lobby.add(centerPanel, BorderLayout.CENTER);
         lobby.add(rightPanel, BorderLayout.EAST);
 
         btnSendChat.addActionListener(e -> sendChat());
@@ -370,6 +378,86 @@ public class GuiClient extends JFrame {
         return lobby;
     }
 
+    private JButton createStyledButton(String text, Color background) {
+        JButton button = new JButton(text);
+        button.setBackground(background);
+        button.setForeground(Color.WHITE);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        button.setFocusPainted(false);
+        return button;
+    }
+
+    private JPanel createPlayerCard() {
+        JPanel playerCard = new JPanel(new BorderLayout(12, 12));
+        playerCard.setBackground(new Color(255, 255, 255));
+        playerCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 210, 225)),
+                BorderFactory.createEmptyBorder(12, 12, 12, 12)));
+
+        JLabel title = new JLabel("Bạn", SwingConstants.LEFT);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        title.setForeground(new Color(14, 76, 129));
+
+        lblAvatar = createAvatarLabel("Avatar");
+        JPanel infoPanel = new JPanel(new GridLayout(6, 1, 4, 4));
+        infoPanel.setBackground(new Color(255, 255, 255));
+        lblNickname = createInfoLabel("Nickname: -");
+        lblWins = createInfoLabel("Số ván thắng: 0");
+        lblLosses = createInfoLabel("Số ván thua: 0");
+        lblRate = createInfoLabel("Tỉ lệ thắng: 0%");
+        lblPoints = createInfoLabel("Điểm: 0");
+        lblRank = createInfoLabel("Thứ hạng: -");
+        infoPanel.add(lblNickname);
+        infoPanel.add(lblWins);
+        infoPanel.add(lblLosses);
+        infoPanel.add(lblRate);
+        infoPanel.add(lblPoints);
+        infoPanel.add(lblRank);
+
+        playerCard.add(title, BorderLayout.NORTH);
+        playerCard.add(lblAvatar, BorderLayout.WEST);
+        playerCard.add(infoPanel, BorderLayout.CENTER);
+
+        return playerCard;
+    }
+
+    private JPanel createOpponentCard() {
+        JPanel opponentCard = new JPanel(new BorderLayout(12, 12));
+        opponentCard.setBackground(new Color(255, 255, 255));
+        opponentCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 210, 225)),
+                BorderFactory.createEmptyBorder(12, 12, 12, 12)));
+
+        JLabel title = new JLabel("Đối thủ", SwingConstants.LEFT);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        title.setForeground(new Color(14, 76, 129));
+
+        lblOpponentAvatar = createAvatarLabel("Opponent");
+        JPanel infoPanel = new JPanel(new GridLayout(3, 1, 4, 4));
+        infoPanel.setBackground(new Color(255, 255, 255));
+        lblOpponent = createInfoLabel("Chưa có đối thủ");
+        lblTimer = createInfoLabel("Thời gian: 00:00");
+        lblOpponentRank = createInfoLabel("Thứ hạng: -");
+        infoPanel.add(lblOpponent);
+        infoPanel.add(lblTimer);
+        infoPanel.add(lblOpponentRank);
+
+        opponentCard.add(title, BorderLayout.NORTH);
+        opponentCard.add(lblOpponentAvatar, BorderLayout.WEST);
+        opponentCard.add(infoPanel, BorderLayout.CENTER);
+
+        return opponentCard;
+    }
+
+    private JLabel createAvatarLabel(String text) {
+        JLabel label = new JLabel(text, SwingConstants.CENTER);
+        label.setPreferredSize(new Dimension(90, 90));
+        label.setOpaque(true);
+        label.setBackground(new Color(235, 243, 255));
+        label.setBorder(BorderFactory.createLineBorder(new Color(200, 210, 225)));
+        label.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        return label;
+    }
     private JLabel createInfoLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(new Font("Segoe UI", Font.PLAIN, 16));
@@ -382,8 +470,11 @@ public class GuiClient extends JFrame {
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             connected = true;
+            System.out.println("[CLIENT] Kết nối server thành công!");
             new Thread(this::readLoop).start();
         } catch (Exception ex) {
+            System.out.println("[CLIENT] ✗ Không thể kết nối: " + ex.getMessage());
+            ex.printStackTrace();
             appendChat("✗ Không thể kết nối: " + ex.getMessage());
             connected = false;
         }
@@ -398,18 +489,25 @@ public class GuiClient extends JFrame {
             String line;
             while (socket != null && !socket.isClosed() && (line = in.readLine()) != null) {
                 final String serverLine = line;
+                System.out.println("[SERVER] " + serverLine);
                 SwingUtilities.invokeLater(() -> {
                     appendChat(serverLine);
                     if (!loggedIn && serverLine.contains("Đăng nhập thành công")) {
+                        System.out.println("[CLIENT] Đăng nhập thành công! Chuyển sang lobby.");
                         loggedIn = true;
                         showLobbyCard();
                     }
                     if (serverLine.startsWith("=== THÔNG TIN CÁ NHÂN ===")) {
-                        // ignore header
+                        parsingProfileInfo = true;
+                    } else if (serverLine.startsWith("========================")) {
+                        parsingProfileInfo = false;
+                    } else if (parsingProfileInfo) {
+                        updateProfileInfo(serverLine);
                     }
                 });
             }
         } catch (IOException e) {
+            System.out.println("[CLIENT] Kết nối bị ngắt: " + e.getMessage());
             appendChat("Kết nối bị ngắt: " + e.getMessage());
             connected = false;
             loggedIn = false;
@@ -456,8 +554,14 @@ public class GuiClient extends JFrame {
     private void login() {
         String username = loginUsernameField.getText().trim();
         String password = new String(loginPasswordField.getPassword()).trim();
+        System.out.println("[CLIENT] Login button clicked. Username: " + username);
         if (username.isEmpty() || password.isEmpty()) {
             appendChat("Nhập username và password để đăng nhập.");
+            return;
+        }
+        if (!connected) {
+            System.out.println("[CLIENT] ✗ Not connected to server!");
+            appendChat("✗ Chưa kết nối server!");
             return;
         }
         sendCommand("/login " + username + " " + password);
@@ -504,6 +608,24 @@ public class GuiClient extends JFrame {
 
     private void showLobbyCard() {
         cardLayout.show(cards, "lobby");
+    }
+
+    private void updateProfileInfo(String serverLine) {
+        String regex = "^(.*) \\((.*)\\) - W:(\\d+) L:(\\d+) Rate:(\\d+)% Points:(\\d+)$";
+        if (serverLine.matches(regex)) {
+            String nickname = serverLine.replaceAll(regex, "$1");
+            String username = serverLine.replaceAll(regex, "$2");
+            String wins = serverLine.replaceAll(regex, "$3");
+            String losses = serverLine.replaceAll(regex, "$4");
+            String rate = serverLine.replaceAll(regex, "$5");
+            String points = serverLine.replaceAll(regex, "$6");
+            lblNickname.setText("Nickname: " + nickname + " (" + username + ")");
+            lblWins.setText("Số trận thắng: " + wins);
+            lblLosses.setText("Số trận thua: " + losses);
+            lblRate.setText("Tỉ lệ thắng: " + rate + "%");
+            lblPoints.setText("Điểm: " + points);
+            lblRank.setText("Thứ hạng: -");
+        }
     }
 
     private void appendChat(String text) {
